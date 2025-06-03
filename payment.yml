@@ -1,60 +1,60 @@
-- name: conigure payment server
-  become: yes
+- name: configuring the payment component
   hosts: payment
+  become: yes
   tasks:
-  - name: install python3 packages
+  - name: install the application
     ansible.builtin.dnf:
       name: "{{ item }}"
       state: installed
     loop:
-    - python3 
-    - gcc 
+    - python3
+    - gcc
     - python3-devel
 
-  - name: create app directory
+
+
+  - name: add the user  
+    ansible.builtin.user:
+      name: roboshop
+      home: /app
+      shell: /sbin/nologin
+      system: true
+
+  - name: create the app directory
     ansible.builtin.file:
       path: /app
       state: directory
 
-  - name: create roboshop system user
-    ansible.builtin.user:
-      name: roboshop
-      shell: /sbin/nologin
-      system: true
-      home: /app
 
-  - name: download payment code
+  - name: download the code
     ansible.builtin.get_url:
-      url: https://roboshop-artifacts.s3.amazonaws.com/payment-v3.zip 
+      url: https://roboshop-artifacts.s3.amazonaws.com/payment-v3.zip
       dest: /tmp/payment.zip
 
-  - name: extract payment code
+  - name: extract the code
     ansible.builtin.unarchive:
       src: /tmp/payment.zip
       dest: /app
       remote_src: yes
 
-  - name: install dependencies
+  - name: Install specified python requirements
     ansible.builtin.pip:
       requirements: requirements.txt
       executable: pip3.9
     args:
       chdir: /app
 
-  - name: copy payment service
+  - name: copy the service file
     ansible.builtin.copy:
       src: payment.service
       dest: /etc/systemd/system/payment.service
 
-  - name: daemon reload
+  - name: daeomon_reload
     ansible.builtin.systemd_service:
       daemon_reload: true
 
-  - name: enable and start payment
+  - name: Start and enable the payment service
     ansible.builtin.service:
       name: payment
       state: started
       enabled: yes
-
-
-  
